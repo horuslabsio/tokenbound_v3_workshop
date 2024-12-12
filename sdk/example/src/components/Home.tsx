@@ -38,27 +38,25 @@ function Home() {
   useEffect(() => {
     // configuration
     if (account) {
-      const options = {
-        account: account,
-        registryAddress: registryAddress,
-        implementationAddress: implementationAddress,
-        version: TBAVersion.V3,
-        chain_id: TBAChainID.main,
-        jsonRPC: "https://free-rpc.nethermind.io/sepolia-juno/v0_7",
-      };
-      const client = new TokenboundClient(options);
-      setTokenbound(client);
+      // const options = {
+      //   account: account,
+      //   version: TBAVersion.V3,
+      //   chain_id: TBAChainID.main,
+      //   jsonRPC: "https://starknet-mainnet.g.alchemy.com/starknet/version/rpc/v0_7/tiuYdkP4DRSPX1otnf6jf7eraBLAgF6s",
+      // };
+      // const client = new TokenboundClient(options);
+      // setTokenbound(client);
     }
   }, [account]);
 
   const tokenContract = "";
   const tokenId = "";
-  const url = `https://sepolia.starkscan.co/contract/${account}`;
+  const url = `https://starkscan.co/contract/${tbaAccount}`;
 
   const deployAccount = async () => {
     if (tokenbound) {
       try {
-        // TODO
+
       } catch (error) {
         console.log(error);
       }
@@ -122,6 +120,7 @@ function Home() {
     }
   };
 
+  // Fetch Account and tba owner 
   useEffect(() => {
     if (tbaAccount && deployStatus) {
       // const getAccountOwner = async () => {
@@ -140,6 +139,7 @@ function Home() {
     }
   }, [tbaAccount, deployStatus]);
 
+  // fetch tokenbound locked and permission status
   useEffect(() => {
     if (tbaAccount && deployStatus) {
       // const getLockStatus = async () => {
@@ -164,6 +164,8 @@ function Home() {
     }
   }, [tbaAccount, owner, deployStatus]);
 
+
+// fetch account status and deployment status
   useEffect(() => {
     // const getAccount = async () => {
     //   const account = await tokenbound?.getAccount({
