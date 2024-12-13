@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { num } from "starknet";
+import { cairo, num } from "starknet";
 import {
   TokenboundClient,
   Call,
@@ -22,41 +22,46 @@ function Home() {
   const [permissionStatus, setPermissionStatus] = useState<boolean | null>();
   const [timeUntilUnlocks, setTimeUntilUnlocks] = useState<string>();
 
-  const V2_SALT = "";
+  const SALT = "230000000";
 
   // replace with your own permissioned address
-  const testPermissionedAddr: string = "";
+  const testPermissionedAddr: string =
+    "0x010f7970496Dc785b89fb692cD80a2d8591ee6C2616C0C331Ae9Cf36D77CC135";
 
   const { connect, connectors } = useConnect();
   const { address, account } = useAccount();
-
-  const registryAddress: string = "";
-  const implementationAddress: string = "";
 
   const [tokenbound, setTokenbound] = useState<TokenboundClient | null>(null);
 
   useEffect(() => {
     // configuration
     if (account) {
-      // const options = {
-      //   account: account,
-      //   version: TBAVersion.V3,
-      //   chain_id: TBAChainID.main,
-      //   jsonRPC: "https://starknet-mainnet.g.alchemy.com/starknet/version/rpc/v0_7/tiuYdkP4DRSPX1otnf6jf7eraBLAgF6s",
-      // };
-      // const client = new TokenboundClient(options);
-      // setTokenbound(client);
+      const options = {
+        account: account,
+        version: TBAVersion.V3,
+        chain_id: TBAChainID.main,
+        jsonRPC:
+          "https://starknet-mainnet.g.alchemy.com/starknet/version/rpc/v0_7/tiuYdkP4DRSPX1otnf6jf7eraBLAgF6s",
+      };
+      const client = new TokenboundClient(options);
+      setTokenbound(client);
     }
   }, [account]);
 
-  const tokenContract = "";
-  const tokenId = "";
+  const tokenContract =
+    "0x05c20131088071b6dba22127758a273da1941d018bcb19472d741d947e3b35c6";
+  const tokenId = "77181798961753142530";
   const url = `https://starkscan.co/contract/${tbaAccount}`;
 
   const deployAccount = async () => {
     if (tokenbound) {
       try {
-
+        const response = await tokenbound.createAccount({
+          tokenContract,
+          tokenId,
+          salt: SALT,
+        });
+        setTxHash(response.transaction_hash);
       } catch (error) {
         console.log(error);
       }
@@ -64,17 +69,36 @@ function Home() {
   };
 
   const execute = async () => {
+    let recipient: string =
+      "0x010f7970496Dc785b89fb692cD80a2d8591ee6C2616C0C331Ae9Cf36D77CC135";
+    let amount = "100000000000000000";
+    const call: Call = {
+      to: "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+      selector:
+        "0x83afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e",
+      calldata: [recipient, amount],
+    };
+
     try {
-      // TO DO
+      await tokenbound?.execute(tbaAccount ?? "", [call]);
     } catch (error) {
       console.log(error);
     }
   };
 
+  const STRK_ADDRESS: string =
+    "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
+  const RECIPIENT: string =
+    "0x010f7970496Dc785b89fb692cD80a2d8591ee6C2616C0C331Ae9Cf36D77CC135";
   // transfer ETH to your tokenbound account and replace here
   const transferERC20 = async () => {
     try {
-      // TO DO
+      await tokenbound?.transferERC20({
+        tbaAddress: tbaAccount ?? "",
+        contractAddress: STRK_ADDRESS,
+        recipient: RECIPIENT,
+        amount: "100000000000000000",
+      });
       alert("Transfer was successful");
     } catch (error) {
       console.log(error);
@@ -94,7 +118,10 @@ function Home() {
   // replace with a valid timestamp
   const lockAccount = async () => {
     try {
-      //  TO DO
+      await tokenbound?.lock({
+        tbaAddress: tbaAccount as string,
+        lockUntill: 1734015965,
+      });
       alert("Account was locked successfully");
     } catch (error) {
       console.log(error, "lock");
@@ -113,79 +140,83 @@ function Home() {
 
   const setPermissions = async () => {
     try {
-      //  TO DO
+      await tokenbound?.setPermission({
+        tbaAddress: tbaAccount as string,
+        permissionedAddresses: [testPermissionedAddr],
+        permissions: [true],
+      });
       alert("Permissions added successfully");
     } catch (error) {
       console.log(error);
     }
   };
 
-  // Fetch Account and tba owner 
+  // Fetch Account and tba owner
   useEffect(() => {
     if (tbaAccount && deployStatus) {
-      // const getAccountOwner = async () => {
-      //   const nftowner = await tokenbound?.getOwner({
-      //     tbaAddress: tbaAccount,
-      //   });
-      //   setOwner(num.toHex(nftowner));
-      // };
-      // const getNFTOwner = async () => {
-      //   const nftowner = await tokenbound?.getOwnerNFT(tbaAccount as string);
-      //   setNftOwner(num.toHex(nftowner[0]));
-      //   setNftOwnerId(nftowner[1].toString());
-      // };
-      // getAccountOwner();
-      // getNFTOwner();
+      const getAccountOwner = async () => {
+        const nftowner = await tokenbound?.getOwner({
+          tbaAddress: tbaAccount,
+        });
+        setOwner(num.toHex(nftowner));
+      };
+      const getNFTOwner = async () => {
+        const nftowner = await tokenbound?.getOwnerNFT(tbaAccount as string);
+        setNftOwner(num.toHex(nftowner[0]));
+        setNftOwnerId(nftowner[1].toString());
+      };
+      getAccountOwner();
+      getNFTOwner();
     }
   }, [tbaAccount, deployStatus]);
 
   // fetch tokenbound locked and permission status
   useEffect(() => {
     if (tbaAccount && deployStatus) {
-      // const getLockStatus = async () => {
-      //   const isLocked = await tokenbound?.isLocked({
-      //     tbaAddress: tbaAccount,
-      //   });
-      //   setLockStatus(Boolean(isLocked[0]));
-      //   setTimeUntilUnlocks(isLocked[1].toString());
-      // };
-      // const getAccountPermissions = async () => {
-      //   const permission = await tokenbound?.getPermission({
-      //     tbaAddress: tbaAccount,
-      //     owner: owner,
-      //     permissionedAddress: testPermissionedAddr,
-      //   });
-      // if (permission != null) {
-      //   setPermissionStatus(permission);
-      // }
-      // };
-      // getAccountPermissions();
-      // getLockStatus();
+      const getLockStatus = async () => {
+        const isLocked = await tokenbound?.isLocked({
+          tbaAddress: tbaAccount,
+        });
+        setLockStatus(Boolean(isLocked[0]));
+        setTimeUntilUnlocks(isLocked[1].toString());
+      };
+      const getAccountPermissions = async () => {
+        const permission = await tokenbound?.getPermission({
+          tbaAddress: tbaAccount,
+          owner: owner,
+          permissionedAddress: testPermissionedAddr,
+        });
+        if (permission != null) {
+          setPermissionStatus(permission);
+        }
+      };
+      getAccountPermissions();
+      getLockStatus();
     }
   }, [tbaAccount, owner, deployStatus]);
 
-
-// fetch account status and deployment status
+  // fetch account address and deployment status
   useEffect(() => {
-    // const getAccount = async () => {
-    //   const account = await tokenbound?.getAccount({
-    //     tokenContract: tokenContract,
-    //     tokenId: tokenId,
-    //     salt: V2_SALT,
-    //   });
-    //   setTbaAccount(num.toHexString(account ?? ""));
-    // };
-    // const getDeploymentStatus = async () => {
-    //   const status = await tokenbound?.checkAccountDeployment({
-    //     tokenContract,
-    //     tokenId,
-    //     salt: V2_SALT,
-    //   });
-    //   setDeployStatus(status?.deployed);
-    //   setAccountClassHash(status?.classHash);
-    // };
-    // getAccount();
-    // getDeploymentStatus();
+    const getAccount = async () => {
+      const account = await tokenbound?.getAccount({
+        tokenContract: tokenContract,
+        tokenId: tokenId,
+        salt: SALT,
+      });
+      console.log(account);
+      setTbaAccount(num.toHexString(account ?? ""));
+    };
+    const getDeploymentStatus = async () => {
+      const status = await tokenbound?.checkAccountDeployment({
+        tokenContract,
+        tokenId,
+        salt: SALT,
+      });
+      setDeployStatus(status?.deployed);
+      setAccountClassHash(status?.classHash);
+    };
+    getAccount();
+    getDeploymentStatus();
   }, [tokenContract]);
 
   return (
